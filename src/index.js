@@ -4,7 +4,9 @@ function eval() {
 }
 
 function expressionCalculator(expr) {
-    // write your solution here
+    if(expr.replace(/[0-9]/g, "").replace(/[)]/,"").length !== expr.replace(/[0-9]/g, "").replace(/[()]/,"").length)
+        throw "ExpressionError: Brackets must be paired";
+    
 }
 
 module.exports = {
