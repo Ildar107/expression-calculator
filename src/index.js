@@ -35,9 +35,57 @@ function expressionCalculator(expr) {
     expr = expr.replace(/ /g, "");
     if(expr.replace(/[\d+\-*/)]/g, "").length !== expr.replace(/[\d+\-*/(]/g, "").length)
         throw "ExpressionError: Brackets must be paired";
-    //expr = reverse(expr);
-    return getResult(expr);
+    return some(expr.split("").join(" ").replace(/\b \b/g, "").split(" "), 0).value;
 }
+
+    //20 - 57 * 12 - (  58 + 84 * 32 / 27  )
+    function some(arr, i){
+        
+        if(i === arr.length )
+            return null;
+
+        var value = 0;
+        var func = null;
+        for(; i < arr.length; i++) 
+        {
+            if(arr[i].search(/\b/) === 0)
+            {
+                if(func === null)
+                    value = Number(arr[i]);
+                else
+                {
+                    if(arr[i+1] !== undefined && arr[i - 1].search(/[+\-]/) === 0 && arr[i + 1].search(/[*/]/) === 0)
+                    {
+                        if(arr[i-1] === "-" && value > 0 && i > 2)
+                            value = -value;
+                        let inner = some(arr, i);
+                        value = func(value, inner.value);
+                        i = inner.index;
+                    } 
+                    else
+                        value = func(value, Number(arr[i]));  
+                }
+            }
+
+            if(operations.has(arr[i]))
+                func = operations.get(arr[i]);
+            
+            if(arr[i] === "(")
+            {
+                if(arr[i-1] === "-"  && value > 0)
+                    value = -value;
+                let inner = some(arr, i + 1);
+                value = func(value, inner.value);
+                i = inner.index;
+            }
+
+            if(arr[i] === ")")
+                return {value: value, index: i + 1};
+        }
+
+        return {value: value, index: i};
+    }
+
 
 function getResult(expr){
     if(expr.length === 0)
