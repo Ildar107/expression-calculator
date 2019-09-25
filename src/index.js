@@ -14,11 +14,29 @@ const operations = new Map([
     }]
 ]);
 
+function reverse(expr)
+{
+    var numArr = expr.split(/[+\-*/()]/).filter(x=>x);
+    var exprArr = expr.replace(/[0-9]{1,9}/g, "Z").split("").reverse();
+    var reverseArr = [];
+    for(var i =0; i < exprArr.length; i++)
+    {
+        if(exprArr[i] === "Z")
+            reverseArr.push(numArr.pop());
+        if(exprArr[i].search(/[()]/) === 0)
+            reverseArr.push(exprArr[i] === "(" ? ")" : "(");
+        if(operations.has(exprArr[i]))
+            reverseArr.push(exprArr[i]);
+    }
+    return reverseArr.join("");
+}
+
 function expressionCalculator(expr) {
     expr = expr.replace(/ /g, "");
-    if(expr.replace(/[0-9]/g, "").replace(/[)]/,"").length !== expr.replace(/[0-9]/g, "").replace(/[(]/,"").length)
+    if(expr.replace(/[\d+\-*/)]/g, "").length !== expr.replace(/[\d+\-*/(]/g, "").length)
         throw "ExpressionError: Brackets must be paired";
-    return getResult(expr.split("").reverse().join(""));
+    //expr = reverse(expr);
+    return getResult(expr);
 }
 
 function getResult(expr){
@@ -28,6 +46,7 @@ function getResult(expr){
     var rValue = 0;
     while(expr.length > 0)
     {
+        //let length = expr.length -1;
         if(expr[0].search(/[0-9]/) === 0)
         {
             var nextIndex = expr.search(/[+\-*/)]/) === -1 ? expr.length : expr.search(/[+\-*/)]/);
@@ -37,7 +56,8 @@ function getResult(expr){
 
         if(operations.has(expr[0]))
         {
-            if(expr[0].search(/[\-+]/) === 0)
+            let checkArr = expr.replace(/\d/g,"").split("");
+            if(expr[0].search(/[\-+]/) === 0 && checkArr.length > 1 && checkArr[1].search(/[*/(]/) === 0)
             {    
                 rValue = operations.get(expr[0])(rValue, getResult(expr.substring(1, expr.length)));
                 expr = expr.substring(1, expr.length);
