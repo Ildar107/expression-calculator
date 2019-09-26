@@ -5,7 +5,7 @@ function eval() {
 
 const operations = new Map([
     ["+", (x,y) => x + y],
-    ["-", (x,y) => x-y],
+    ["-", (x,y) => x - y],
     ["*", (x,y) => x*y],
     ["/", (x,y) => {
         if( y === 0)
@@ -35,30 +35,30 @@ function expressionCalculator(expr) {
     expr = expr.replace(/ /g, "");
     if(expr.replace(/[\d+\-*/)]/g, "").length !== expr.replace(/[\d+\-*/(]/g, "").length)
         throw "ExpressionError: Brackets must be paired";
-    return some(expr.split("").join(" ").replace(/\b \b/g, "").split(" "), 0).value;
+    return some(expr.split("").join(" ").replace(/\b \b/g, "").split(" "), 0, 0, null).value;
 }
 
     //20 - 57 * 12 - (  58 + 84 * 32 / 27  )
-    function some(arr, i){
+    function some(arr, i, deep, iValue){
         
         if(i === arr.length )
             return null;
 
         var value = 0;
         var func = null;
+        if(iValue !== null)
+            value = iValue;
         for(; i < arr.length; i++) 
         {
-            if(arr[i].search(/\b/) === 0)
+            if(arr[i] > 0)
             {
                 if(func === null)
                     value = Number(arr[i]);
                 else
                 {
-                    if(arr[i+1] !== undefined && arr[i - 1].search(/[+\-]/) === 0 && arr[i + 1].search(/[*/]/) === 0)
+                    if(arr[i - 1].search(/[+\-]/) === 0)
                     {
-                        if(arr[i-1] === "-" && value > 0 && i > 2)
-                            value = -value;
-                        let inner = some(arr, i);
+                        let inner = some(arr, i, deep + 1, null);
                         value = func(value, inner.value);
                         i = inner.index;
                     } 
@@ -68,19 +68,31 @@ function expressionCalculator(expr) {
             }
 
             if(operations.has(arr[i]))
+            {
+                if((arr[i] === "+" || arr[i] === "-" ) && deep > 0)
+                {
+                    return {value: value, index: i - 1};
+                }
                 func = operations.get(arr[i]);
+            }
             
             if(arr[i] === "(")
             {
-                if(arr[i-1] === "-"  && value > 0)
-                    value = -value;
-                let inner = some(arr, i + 1);
+                let inner = some(arr, i + 1, 0, null);
+                if(arr[inner.index] === ")" && arr[i - 1] !== "/" && inner.index < arr.length - 1)
+                {
+                     let temp = some(arr, inner.index + 1, deep + 1, inner.value);
+                     inner.value = temp.value;
+                     inner.index = temp.index;
+                }
                 value = func(value, inner.value);
                 i = inner.index;
             }
 
             if(arr[i] === ")")
-                return {value: value, index: i + 1};
+            {
+                return {value: value, index: (deep > 0 ? i - 1 : i)};
+            }
         }
 
         return {value: value, index: i};
