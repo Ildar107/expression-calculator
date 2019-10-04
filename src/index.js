@@ -14,132 +14,73 @@ const operations = new Map([
     }]
 ]);
 
-function reverse(expr)
-{
-    var numArr = expr.split(/[+\-*/()]/).filter(x=>x);
-    var exprArr = expr.replace(/[0-9]{1,9}/g, "Z").split("").reverse();
-    var reverseArr = [];
-    for(var i =0; i < exprArr.length; i++)
-    {
-        if(exprArr[i] === "Z")
-            reverseArr.push(numArr.pop());
-        if(exprArr[i].search(/[()]/) === 0)
-            reverseArr.push(exprArr[i] === "(" ? ")" : "(");
-        if(operations.has(exprArr[i]))
-            reverseArr.push(exprArr[i]);
-    }
-    return reverseArr.join("");
-}
-
 function expressionCalculator(expr) {
     expr = expr.replace(/ /g, "");
     if(expr.replace(/[\d+\-*/)]/g, "").length !== expr.replace(/[\d+\-*/(]/g, "").length)
         throw "ExpressionError: Brackets must be paired";
-    return some(expr.split("").join(" ").replace(/\b \b/g, "").split(" "), 0, 0, null).value;
+    return some(expr.split("").join(" ").replace(/\b \b/g, "").split(" ")).value;
 }
 
     //20 - 57 * 12 - (  58 + 84 * 32 / 27  )
-    function some(arr, i, deep, iValue){
+    function some(arr){
         
-        if(i === arr.length )
-            return null;
+        var bracketsStack = [];
+        var multiplyStack = [];
+        var sumStack = [];
+        var fBracketsIndex = arr.findIndex(x => x === "(");
+        var lBracketsIndex = arr.findIndex(x => x === ")");
+        var index = 0;
+        console.log(arr.join(''));
+        while(fBracketsIndex >= 0 && fBracketsIndex < lBracketsIndex)
+        {    
 
-        var value = 0;
-        var func = null;
-        if(iValue !== null)
-            value = iValue;
-        for(; i < arr.length; i++) 
-        {
-            if(arr[i] > 0)
-            {
-                if(func === null)
-                    value = Number(arr[i]);
-                else
-                {
-                    if(arr[i - 1].search(/[+\-]/) === 0)
-                    {
-                        let inner = some(arr, i, deep + 1, null);
-                        value = func(value, inner.value);
-                        i = inner.index;
-                    } 
-                    else
-                        value = func(value, Number(arr[i]));  
-                }
-            }
-
-            if(operations.has(arr[i]))
-            {
-                if((arr[i] === "+" || arr[i] === "-" ) && deep > 0)
-                {
-                    return {value: value, index: i - 1};
-                }
-                func = operations.get(arr[i]);
-            }
-            
-            if(arr[i] === "(")
-            {
-                let inner = some(arr, i + 1, 0, null);
-                if(arr[inner.index] === ")" && arr[i - 1] !== "/" && inner.index < arr.length - 1)
-                {
-                     let temp = some(arr, inner.index + 1, deep + 1, inner.value);
-                     inner.value = temp.value;
-                     inner.index = temp.index;
-                }
-                value = func(value, inner.value);
-                i = inner.index;
-            }
-
-            if(arr[i] === ")")
-            {
-                return {value: value, index: (deep > 0 ? i - 1 : i)};
-            }
+            let result = some(arr.slice(fBracketsIndex + 1, arr.length));
+            bracketsStack = arr.slice(0, fBracketsIndex);
+            bracketsStack.push(result.value);
+            index = result.index + fBracketsIndex + 2;
+            bracketsStack = bracketsStack.concat(arr.slice(index, arr.length));
+            lBracketsIndex = bracketsStack.findIndex(x => x === ")");
+            fBracketsIndex = bracketsStack.findIndex(x => x === "(");
+            arr = bracketsStack;
         }
 
-        return {value: value, index: i};
-    }
+        if(bracketsStack.length === 0)
+            bracketsStack = arr;
+        
+        if(lBracketsIndex > 0)
+        {   
+            index = index > 0 ? index : lBracketsIndex;
+            bracketsStack.length = lBracketsIndex;
+        }
 
-
-function getResult(expr){
-    if(expr.length === 0)
-        return null;
-
-    var rValue = 0;
-    while(expr.length > 0)
-    {
-        //let length = expr.length -1;
-        if(expr[0].search(/[0-9]/) === 0)
+        for(let i = 0; i < bracketsStack.length; i++)
         {
-            var nextIndex = expr.search(/[+\-*/)]/) === -1 ? expr.length : expr.search(/[+\-*/)]/);
-            rValue = Number(expr.substring(0, nextIndex));
-            expr = expr.substring(nextIndex, expr.length);
-        }   
+            if(bracketsStack[i] === "*" || bracketsStack[i] === "/")
+            {
+                let func = operations.get(bracketsStack[i]);
+                multiplyStack.push(func(multiplyStack.pop(), bracketsStack[i+1]));
+                i++;
+            }
+            else    
+                multiplyStack.push(operations.has(bracketsStack[i]) ? bracketsStack[i] : Number(bracketsStack[i]));
+        }
 
-        if(operations.has(expr[0]))
+        for(let i = 0; i < multiplyStack.length; i++)
         {
-            let checkArr = expr.replace(/\d/g,"").split("");
-            if(expr[0].search(/[\-+]/) === 0 && checkArr.length > 1 && checkArr[1].search(/[*/(]/) === 0)
-            {    
-                rValue = operations.get(expr[0])(rValue, getResult(expr.substring(1, expr.length)));
-                expr = expr.substring(1, expr.length);
-                break;
+            if(multiplyStack[i] === "+" || multiplyStack[i] === "-")
+            {
+                let func = operations.get(multiplyStack[i]);
+                sumStack.push(func(sumStack.pop(), multiplyStack[i+1]));
+                i++;
             }
             else
-            {
-                var next = expr.substring(1,expr.length).search(/[+\-*/)]/) === -1 ? expr.length : expr.substring(1,expr.length).search(/[+\-*/)]/);
-                rValue = operations.get(expr[0])(rValue, Number(expr.substring(1, next + 1)));
-                expr = expr.substring(next + 1, expr.length);
-            }
+                sumStack.push(Number(multiplyStack[i]));
         }
 
-        if(expr[0] === "(" || expr[0] === ")")
-        {
-            var temp = getResult(expr.substring(1, expr.length));
-            return temp === null ? rValue : temp ;
-        }
+        return {value :sumStack.pop(), index: index};
     }
 
-    return rValue;
- }
+
 
 module.exports = {
     expressionCalculator
