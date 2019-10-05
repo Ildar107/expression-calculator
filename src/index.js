@@ -76,7 +76,7 @@ function calculate(arr){
             sumStack.push(Number(multiplyStack[i]));
     }
 
-    return {value :sumStack.pop(), rest};
+    return {value : sumStack.pop(), rest};
 }
 
 module.exports = {
