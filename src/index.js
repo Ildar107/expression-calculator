@@ -9,7 +9,7 @@ const operations = new Map([
     ["*", (x,y) => x*y],
     ["/", (x,y) => {
         if( y === 0)
-            throw "TypeError: Devision by zero.";
+            throw "TypeError: Division by zero.";
         return x / y;
     }]
 ]);
@@ -29,9 +29,7 @@ function expressionCalculator(expr) {
         var sumStack = [];
         var fBracketsIndex = arr.findIndex(x => x === "(");
         var lBracketsIndex = arr.findIndex(x => x === ")");
-        var index = 0;
         var newArray = [];
-        //console.log(arr.join(''));
         while(fBracketsIndex >= 0 && fBracketsIndex < lBracketsIndex)
         {    
 
@@ -39,8 +37,6 @@ function expressionCalculator(expr) {
             bracketsStack = arr.slice(0, fBracketsIndex);
             bracketsStack.push(result.value);
             bracketsStack = bracketsStack.concat(result.newArray);
-            // index = result.index + fBracketsIndex + 2;
-            // bracketsStack = bracketsStack.concat(arr.slice(index, arr.length));
             lBracketsIndex = bracketsStack.findIndex(x => x === ")");
             fBracketsIndex = bracketsStack.findIndex(x => x === "(");
             arr = bracketsStack;
@@ -51,7 +47,6 @@ function expressionCalculator(expr) {
         
         if(lBracketsIndex > 0)
         {   
-            index = index > 0 ? index : lBracketsIndex;
             newArray = bracketsStack.slice(lBracketsIndex+1, bracketsStack.length);
             bracketsStack.length = lBracketsIndex;
         }
@@ -80,7 +75,7 @@ function expressionCalculator(expr) {
                 sumStack.push(Number(multiplyStack[i]));
         }
 
-        return {value :sumStack.pop(), index: index, newArray};
+        return {value :sumStack.pop(), newArray};
     }
 
 
