@@ -30,15 +30,17 @@ function expressionCalculator(expr) {
         var fBracketsIndex = arr.findIndex(x => x === "(");
         var lBracketsIndex = arr.findIndex(x => x === ")");
         var index = 0;
-        console.log(arr.join(''));
+        var newArray = [];
+        //console.log(arr.join(''));
         while(fBracketsIndex >= 0 && fBracketsIndex < lBracketsIndex)
         {    
 
             let result = some(arr.slice(fBracketsIndex + 1, arr.length));
             bracketsStack = arr.slice(0, fBracketsIndex);
             bracketsStack.push(result.value);
-            index = result.index + fBracketsIndex + 2;
-            bracketsStack = bracketsStack.concat(arr.slice(index, arr.length));
+            bracketsStack = bracketsStack.concat(result.newArray);
+            // index = result.index + fBracketsIndex + 2;
+            // bracketsStack = bracketsStack.concat(arr.slice(index, arr.length));
             lBracketsIndex = bracketsStack.findIndex(x => x === ")");
             fBracketsIndex = bracketsStack.findIndex(x => x === "(");
             arr = bracketsStack;
@@ -50,6 +52,7 @@ function expressionCalculator(expr) {
         if(lBracketsIndex > 0)
         {   
             index = index > 0 ? index : lBracketsIndex;
+            newArray = bracketsStack.slice(lBracketsIndex+1, bracketsStack.length);
             bracketsStack.length = lBracketsIndex;
         }
 
@@ -58,7 +61,7 @@ function expressionCalculator(expr) {
             if(bracketsStack[i] === "*" || bracketsStack[i] === "/")
             {
                 let func = operations.get(bracketsStack[i]);
-                multiplyStack.push(func(multiplyStack.pop(), bracketsStack[i+1]));
+                multiplyStack.push(func(multiplyStack.pop(), Number(bracketsStack[i+1])));
                 i++;
             }
             else    
@@ -77,7 +80,7 @@ function expressionCalculator(expr) {
                 sumStack.push(Number(multiplyStack[i]));
         }
 
-        return {value :sumStack.pop(), index: index};
+        return {value :sumStack.pop(), index: index, newArray};
     }
 
 
